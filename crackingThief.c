@@ -51,9 +51,7 @@ void		tryNextCombination
   }
 
   printf("%s \"Okay, let's %d-%d-%d.\"\n",NAME,count0,count1,count2);
-  //  YOUR CODE HERE to send SIG_TRY_NEXT_DIGIT to safePid
-  kill(safePid, SIG_TRY_NEXT_DIGIT);
-
+  kill(safePid,SIG_TRY_NEXT_DIGIT);
 }
 
 
@@ -89,28 +87,18 @@ int		main		(int		argc,
 				 char*		argv[]
 				)
 {
-  //  YOUR CODE HERE to check if have a command line argument
-  fgets(argv[0], argc, stdin);
-
-  //  YOUR CODE HERE to set safePid to the integer in the string in the command line argument
-  kill(safePid, argc);
-
+  safePid	= strtol(argv[1],NULL,10);
 
   struct sigaction	act;
 
-  //  YOUR CODE HERE to install sigIntHandler for SIG_QUIT
-  memset(&act, '\0', sizeof(act));
-  act.sa_handler = sigIntHandler;
+  memset(&act,'\0',sizeof(act));
+  act.sa_handler	= sigIntHandler;
   sigaction(SIG_QUIT,&act,NULL);
 
-  //  YOUR CODE HERE to install sigWrongDigitHandler for SIG_WRONG_DIGIT
-  memset(&act, '\0', sizeof(act));
-  act.sa_handler = sigWrongDigitHandler;
+  act.sa_handler	= sigWrongDigitHandler;
   sigaction(SIG_WRONG_DIGIT,&act,NULL);
 
-  //  YOUR CODE HERE to install sigRightDigitHandler for SIG_RIGHT_DIGIT
-  memset(&act, '\0', sizeof(act));
-  act.sa_handler = sigRightDigitHandler;
+  act.sa_handler	= sigRightDigitHandler;
   sigaction(SIG_RIGHT_DIGIT,&act,NULL);
 
   tryNextCombination();

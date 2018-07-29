@@ -1,34 +1,32 @@
-/* 
-Robert Keller CSC407 HW2
-
-Safe Program
-
-The safe chooses a random combination
-Then it hangs out waiting for either 
-SIG_QUIT (the game is over, stop the process) or
-SIG_TRY_NEXT_DIGIT (see if the current combination is correct)
-
-*/
-
-
+/*-------------------------------------------------------------------------*
+ *---									---*
+ *---		safe.c							---*
+ *---									---*
+ *---	    This file defines the safe program.				---*
+ *---									---*
+ *---	----	----	----	----	----	----	----	----	---*
+ *---									---*
+ *---	Version 1a		2018 April 20		Joseph Phillips	---*
+ *---									---*
+ *-------------------------------------------------------------------------*/
 
 #include	"safeBustersHeaders.h"
 
-int shouldStillRun = 1;
-int safeOpen = 0;
-int firstNum;
-int secondNum;
-int thirdNum;
+int		shouldStillRun	= 1;
 
-pid_t   crackingThiefPid;
+int		wasCracked	= 0;
 
-//Your simple SIG_QUIT handler should just set your should still run variable to 0.
-void    sigQuitHandler (int  sigInt
-        )
+int		count0;
+
+int		count1;
+
+int		count2;
+
+void		sigIntHandler	(int	sigNum
+				)
 {
-  shouldStillRun = 0;
+  shouldStillRun	= 0;
 }
-
 
 
 int		computeResponse	(int*		countPtr
@@ -54,95 +52,67 @@ int		computeResponse	(int*		countPtr
 }
 
 
-/* Your advanced SIG_TRY_NEXT_DIGIT handler should
-See if your first combination number variable is greater than 0. 
-If it is then do computeResponse(address of first number var) and send the int value it 
-returns back to the process that signaled it.
-else, if your second combination number variable is greater than 0. 
-If it is then do computeResponse(address of second number var) and send the int value it 
-returns back to the process that signaled it.
-else, if your third combination number variable is greater than 0. 
-If it is then do computeResponse(address of third number var) and send the int value it 
-returns back to the process that signaled it. 
-However before sending your signal back to the crackingThief process, see if this value equals 
-SIG_RIGHT_DIGIT. If so, then set your was safe opened variable to 1. */
-void    sigTryNextDigitHandler (int    sigInt,
-         siginfo_t* sigInfoPtr,
-         void*    data
-        )
+void		sigRotateHandler(int		sigNum,
+				 siginfo_t*	infoPtr,
+				 void*		dataPtr
+				)
 {
-  if  (firstNum > 0)
-    computeResponse(firstNum);
-  else if (secondNum > 0)
-    computeResponse(secondNum);
-  else if (thirdNum > 0)
-    if (computeResponse(thirdNum) == SIG_RIGHT_DIGIT)
-      safeOpen = 1;
-    computeResponse(thirdNum);   
+  int	toSend;
+
+  if  (count0 > 0)
+  {
+    toSend	= computeResponse(&count0);
+  }
+  else
+  if  (count1 > 0)
+  {
+    toSend	= computeResponse(&count1);
+  }
+  else
+  if  (count2 > 0)
+  {
+    toSend	= computeResponse(&count2);
+
+    if  (toSend == SIG_RIGHT_DIGIT)
+      wasCracked= 1;
+
+  }
+
+  kill(infoPtr->si_pid,toSend);
 }
 
 
+int		main		()
+{
+  struct sigaction	act;
 
-int main () {
-  //srand(getpid()) (this initializes the random number generator)
-	srand(getpid());
+  srand(getpid());
 
-  struct sigaction  act;
+  memset(&act,'\0',sizeof(act));
 
-//Install a simple handler for SIG_QUIT
-  memset(&act, '\0', sizeof(act));
-  act.sa_handler = sigQuitHandler;
+  act.sa_handler	= sigIntHandler;
   sigaction(SIG_QUIT,&act,NULL);
 
-//Install an advance handler for SIG_TRY_NEXT_DIGIT
-  memset(&act, '\0', sizeof(act));
-  act.sa_flags= SA_SIGINFO;
-  act.sa_sigaction = sigTryNextDigitHandler;
+  act.sa_handler	= NULL;
+  act.sa_sigaction	= sigRotateHandler;
+  act.sa_flags		= SA_SIGINFO;
   sigaction(SIG_TRY_NEXT_DIGIT,&act,NULL);
 
-//Initialize all your combination numbers with the expression (rand() % 16) + 1
-  firstNum = (rand() % 16) +1;
-  secondNum = (rand() % 16) +1;
-  thirdNum = (rand() % 16) +1;
+  count0		= (rand() % 16) + 1;
+  count1		= (rand() % 16) + 1;
+  count2		= (rand() % 16) + 1;
 
-//printf() what the combination is
-  printf("The combination is %d - %d - %d", firstNum, secondNum, thirdNum);
+  printf("Safe (\"Don't tell, but my combination is %d-%d-%d\")\n",
+	 count0,count1,count2
+	);
 
-/*Hangout in a loop:
-while  (your should still run variable)
-  sleep(1);*/
-  while(shouldStillRun)
+  while  (shouldStillRun)
     sleep(1);
 
-/*After ending the loop, note whether the safe was opened:
-if  (your was safe opened var)
-  printf(Some humble);
-else
-  printf(Some bragging message); */
-  if (safeOpen == 1)
-    printf("You got lucky and won the lottery!");
-  else
-    printf("You're too dumb to open this safe!");
+  if  (wasCracked)
+     printf("Safe \"Ya got me!\"\n");
+  else 
+     printf("Safe \"I guess I protected the family jewels! ;)\"\n");
 
-//Do return(EXIT_SUCCESS)
   return(EXIT_SUCCESS);
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

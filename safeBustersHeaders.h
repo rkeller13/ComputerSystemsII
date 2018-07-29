@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------*
  *---									---*
- *---		safeBustersHeaders.h					---*
+ *---		safeBustersHeader.h					---*
  *---									---*
  *---	    This file includes headers and defines constants shared by	---*
  *---	all programs in the safe-cracking thieves application.		---*
